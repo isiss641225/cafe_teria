@@ -1,30 +1,30 @@
-class Pedido:
-    total_ventas_historico = 0.0
+class DetallePedido:
+    def __init__(self, pedido, producto, cantidad, descripcion_pedido=""):
+        self.pedido = pedido
+        self.producto = producto
+        self.cantidad = cantidad
+        self.descripcion_pedido = descripcion_pedido
+        self.precio_unitario = producto.precio_actual
+        self.subtotal = self.cantidad * self.precio_unitario
 
-    def __init__(self, empleado, tipo_pedido):
-        self.id_pedido = 1
-        self.empleado = empleado
-        self.tipo_pedido = tipo_pedido
-        self.monto_pedido = 0.0
-        self.estado_pedido = "Pendiente"
-        self.detalles = [] 
+    def calcular_subtotal_con_descuento(self, porcentaje_descuento):
+        if 0 <= porcentaje_descuento <= 100:
+            descuento = self.subtotal * (porcentaje_descuento / 100)
+            return self.subtotal - descuento
+        print("Error: El descuento debe estar entre 0 y 100.")
+        return self.subtotal
 
-    def agregar_producto(self, producto, cantidad, descripcion="Sin notas"):
-        if producto.stock >= cantidad:
-            #nuevo_detalle = DetallePedido(self, producto, cantidad, descripcion)
-            #self.detalles.append(nuevo_detalle)
-            #self.monto_pedido += nuevo_detalle.subtotal
-            producto.restar_stock(cantidad) # Descuenta del inventario general
+    def actualizar_cantidad(self, nueva_cantidad):
+        if nueva_cantidad > 0:
+            self.cantidad = nueva_cantidad
+            self.subtotal = self.cantidad * self.precio_unitario
+            print(f"Cantidad actualizada a {nueva_cantidad}. Nuevo subtotal: ${self.subtotal:.2f}")
         else:
-            print(f"Stock insuficiente de {producto.nombre_producto}. Disponible: {producto.stock}")
+            print("Error: La cantidad debe ser mayor a 0.")
 
-    def pagar_pedido(self):
-        self.estado_pedido = "Pagado"
-        Pedido.total_ventas_historico += self.monto_pedido
+    def mostrar_linea_detalle(self):
+        nombre_prod = getattr(self.producto, 'nombre', 'Producto')
+        print(f"{nombre_prod} x{self.cantidad} | P. Unitario: ${self.precio_unitario:.2f} | Subtotal: ${self.subtotal:.2f}")
 
-    @classmethod
-    def mostrar_total_en_venta(cls):
-
-        print("\n=========================================")
-        print(f" TOTAL GENERAL EN VENTAS: ${cls.total_ventas_historico}")
-        print("=========================================")
+    def __str__(self):
+        return f"Detalle(Producto: {id(self.producto)}, Cantidad: {self.cantidad}, Subtotal: {self.subtotal})"

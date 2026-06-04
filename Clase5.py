@@ -1,35 +1,30 @@
-class Producto:
-    # PRODUCTOS PREESTABLECIDOS (Se cargan automáticamente en el sistema)
-    # Formato: id_producto: [Nombre, Precio, Stock, Descripción]
-    inventario_preestablecido = {
-        1: ["Café Mocca", 1500, 50, "Chocolate caliente"],
-        2: ["Café Helado", 2000, 40, "Cafe con Helado"],
-        3: ["Capuccino", 2200, 30, "Espresso, leche y espuma"],
-        4: ["Medialuna", 1000, 15, "Medialuna"],
-        5: ["Sandwich de Salame", 3500, 10, "Tostadito es mas rico"]
-    }
+class Pedido:
+    total_ventas_historico = 0.0
 
-    def __init__(self, id_producto):
-        # Al crear un producto, busca sus datos en el inventario preestablecido usando el ID
-        if id_producto in Producto.inventario_preestablecido:
-            datos = Producto.inventario_preestablecido[id_producto]
-            self.id_producto = id_producto
-            self.nombre_producto = datos[0]
-            self.precio_actual = datos[1]
-            self.stock = datos[2]
-            self.descripcion_producto = datos[3]
+    def __init__(self, empleado, tipo_pedido):
+        self.id_pedido = 1
+        self.empleado = empleado
+        self.tipo_pedido = tipo_pedido
+        self.monto_pedido = 0.0
+        self.estado_pedido = "Pendiente"
+        self.detalles = [] 
+
+    def agregar_producto(self, producto, cantidad, descripcion="Sin notas"):
+        if producto.stock >= cantidad:
+            #nuevo_detalle = DetallePedido(self, producto, cantidad, descripcion)
+            #self.detalles.append(nuevo_detalle)
+            #self.monto_pedido += nuevo_detalle.subtotal
+            producto.restar_stock(cantidad) # Descuenta del inventario general
         else:
-            print(f"Error: El ID de producto {id_producto} no existe.")
+            print(f"Stock insuficiente de {producto.nombre_producto}. Disponible: {producto.stock}")
+
+    def pagar_pedido(self):
+        self.estado_pedido = "Pagado"
+        Pedido.total_ventas_historico += self.monto_pedido
 
     @classmethod
-    def mostrar_productos_y_valores(cls):
-        print("\n=== INVENTARIO DE PRODUCTOS Y VALORES ===")
-        for id_prod, datos in cls.inventario_preestablecido.items():
-            print(f"ID: {id_prod} | Producto: {datos[0]:<25} | Valor: ${datos[1]:<8} | Stock: {datos[2]}")
+    def mostrar_total_en_venta(cls):
+
+        print("\n=========================================")
+        print(f" TOTAL GENERAL EN VENTAS: ${cls.total_ventas_historico}")
         print("=========================================")
-
-    def restar_stock(self, cantidad):
-        # Actualiza el stock tanto en la instancia como en el almacén preestablecido
-        self.stock -= cantidad
-        Producto.inventario_preestablecido[self.id_producto][2] = self.stock
-
