@@ -35,7 +35,7 @@ while True:
     elif opcion == "2":
         limpiar_consola()
         print("=== REGISTRAR NUEVO USUARIO ===")
-        nombre = input("Nombre completo: ")
+        nombre = input("Nombre: ")
         correo = input("Correo electrónico: ")
         username = input("Nombre de usuario (username): ")
         password = input("Contraseña: ")
