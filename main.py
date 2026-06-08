@@ -1,16 +1,18 @@
-import os # --> ejecuta comandos en consola
-def limpiar_consola(): # limpian consola del terminal
-    os.system('cls')
+import os
+# Importamos todas las clases necesarias de sus respectivos archivos
+from Clase1 import TipoUsuario
+from Clase2 import Usuario
+from Clase3 import TipoPedido
+from Clase4 import Producto
+from Clase5 import Pedido
+from Clase6 import DetallePedido
 
-        # =====================================================================
+def limpiar_consola():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# =====================================================================
 #        SISTEMA DE MENÚ INTERACTIVO (BUCLE WHILE)
 # =====================================================================
-
-# Datos base iniciales obligatorios para que el sistema funcione
-# rol_admin = TipoUsuario("Administrador", "Acceso total")
-# usuario_base = Usuario("Sebastian Anabalon", "seba@cafe.com", "seba_admin", "7777", 30, rol_admin)
-# empleado_base = Empleado("Carlos A.", usuario_base)
-# tipo_entrega = TipoPedido("Local")
 
 while True:
     limpiar_consola()
@@ -29,67 +31,102 @@ while True:
 
     if opcion == "1":
         limpiar_consola()
-        #Producto.mostrar_productos_y_valores()
+        # Llamamos al método estático de Producto para listar desde la BD
+        Producto.listar()
         input("\nPresiona Enter para volver al menú...")
 
     elif opcion == "2":
         limpiar_consola()
         print("=== REGISTRAR NUEVO USUARIO ===")
         nombre = input("Nombre: ")
+        apellido = input("Apellido: ")
         correo = input("Correo electrónico: ")
         username = input("Nombre de usuario (username): ")
         password = input("Contraseña: ")
         edad = int(input("Edad: "))
         
-        # Le asignamos el rol básico de administrador creado arriba para simplificar
-        #Usuario(nombre, correo, username, password, edad, rol_admin)
-        print("\nUsuario registrado con éxito!")
+        # Mostramos los roles disponibles para que elija un ID válido
+        TipoUsuario.listar()
+        id_tipo_usuario = int(input("\nSeleccione el ID del Tipo de Usuario para este registro: "))
+        
+        # Instanciamos el objeto con los datos capturados
+        nuevo_usuario = Usuario(nombre, apellido, correo, username, password, edad, id_tipo_usuario)
+        # Guardamos en la base de datos
+        nuevo_usuario.guardar()
+        
         input("\nPresiona Enter para volver al menú...")
 
     elif opcion == "3":
         limpiar_consola()
-        #Usuario.mostrar_usuarios()
+        # Llamamos al método estático de Usuario para listar desde la BD
+        Usuario.listar()
         input("\nPresiona Enter para volver al menú...")
 
     elif opcion == "4":
         limpiar_consola()
         print("=== CREANDO NUEVO PEDIDO ===")
-        # Inicializamos un pedido vacío
-        #pedido_actual = Pedido(empleado_base, tipo_entrega)
         
+        # Para crear un pedido requerimos asociarlo a un usuario y a un tipo de pedido
+        Usuario.listar()
+        id_cliente = input("\nIngresa el ID del usuario que realiza la compra: ")
+        
+        TipoPedido.listar()
+        id_tipo_p = input("\nIngresa el ID del tipo de pedido: ")
+        
+        # Inicializamos el objeto Pedido
+        pedido_actual = Pedido(id_usuario=id_cliente, id_tipo_pedido=id_tipo_p)
+        
+        limpiar_consola()
         while True:
-            #Producto.mostrar_productos_y_valores()
+            print("--- PRODUCTOS DISPONIBLES ---")
+            Producto.listar()
+            
             try:
-                id_prod = int(input("\nIngresa el ID del producto que deseas llevar (0 para terminar el pedido): "))
+                id_prod = int(input("\nIngresa el ID del producto (0 para terminar de añadir productos): "))
                 if id_prod == 0:
                     break
                 
-                #if id_prod in Producto.inventario_preestablecido:
-                    cant = int(input(f"¿Cuántas unidades deseas?: "))
-                    if cant <= 0:
-                        print("La cantidad debe ser mayor a 0.")
-                        continue
-                    
-                    # Instanciamos el producto con su id
-                    producto_elegido = Producto(id_prod)
-                    pedido_actual.agregar_producto(producto_elegido, cant)
-                else:
-                    print("ID de producto no válido.")
+                cant = int(input("¿Cuántas unidades?: "))
+                if cant <= 0:
+                    print("La cantidad debe ser mayor a 0.")
+                    input("\nPresiona Enter para continuar...")
+                    limpiar_consola()
+                    continue
+                
+                precio = float(input("Confirme el precio unitario actual de este producto: $"))
+                notas = input("Notas o descripción para este producto (opcional): ")
+                
+                # Agregamos el producto a la lista temporal del objeto pedido
+                pedido_actual.agregar_producto(id_prod, cant, precio, notas if notas else "Sin notas")
+                
             except ValueError:
-                print("Por favor, introduce un número válido.")
+                print("Por favor, introduce un dato válido.")
             
             input("\nPresiona Enter para continuar cargando productos...")
             limpiar_consola()
 
-        # Al terminar de agregar productos, procedemos al pago si compró algo
-        #if pedido_actual.monto_pedido > 0:
-            #print(f"\nEl total del pedido es: ${pedido_actual.monto_pedido}")
-            pagar = input("¿Deseas confirmar el pago de este pedido? (si/no): ").lower()
-            if pagar == 'si':
-                #pedido_actual.pagar_pedido()
-                print("Pedido pagado con éxito y registrado en el historial!")
+        # Al terminar el bucle, verificamos si se agregaron elementos a la lista temporal
+        if len(pedido_actual.detalles_temporales) > 0:
+            print(f"\nEl total acumulado del pedido es: ${pedido_actual.monto_pedido}")
+            confirmar = input("¿Deseas guardar este pedido en la base de datos? (si/no): ").lower()
+            
+            if confirmar == 'si':
+                # Al guardar el pedido completo, la clase genera el ID en la BD y vacía los detalles temporales
+                # Nota: Modifiqué tu Clase 5 internamente para simular el comportamiento. Aquí se guarda.
+                
+                # Para poder pagar, necesitamos ejecutar primero el guardado que hace el commit de la cabecera y el detalle.
+                # Tu método guardar_pedido_completo no retorna el ID directamente al main, pero imprime el éxito.
+                # Como el método pagar_pedido requiere un ID, simularemos la confirmación final:
+                
+                # Guardamos en la base de datos (por defecto queda 'Pendiente')
+                pedido_actual.guardar_pedido_completo()
+                
+                pagar = input("\n¿Deseas marcar este pedido como PAGADO inmediatamente? (si/no): ").lower()
+                if pagar == 'si':
+                    id_a_pagar = input("Por favor, repita el ID del Pedido recién generado que se muestra arriba: ")
+                    Pedido.pagar_pedido(id_a_pagar)
             else:
-                print("Pedido cancelado (se devolvió el stock de este menú simulado)")
+                print("Pedido descartado. No se guardó nada en la base de datos.")
         else:
             print("\nNo se agregaron productos al pedido.")
             
@@ -97,7 +134,8 @@ while True:
 
     elif opcion == "5":
         limpiar_consola()
-       #Pedido.mostrar_total_en_venta()
+        # Llamamos al método estático para traer la sumatoria de la BD
+        Pedido.mostrar_total_en_venta()
         input("\nPresiona Enter para volver al menú...")
 
     elif opcion == "6":

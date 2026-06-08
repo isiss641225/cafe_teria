@@ -106,4 +106,6 @@ class TipoPedido:
             valores = (nueva_descripcion, id_tipo_pedido)
             cursor.execute(sql, valores)
             conexion.commit()
-            print
+            print("\nTipo de pedido actualizado correctamente.")
+            cursor.close()
+            conexion.close()
