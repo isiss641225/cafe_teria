@@ -1,48 +1,82 @@
 from conexion import Conexion
 
-class Producto:
-    def __init__(self, nombre_producto, precio_actual, stock, descripcion_producto, id_producto=None):
-        self.id_producto = id_producto
-        self.nombre_producto = nombre_producto
-        self.precio_actual = precio_actual
-        self.stock = stock
-        self.descripcion_producto = descripcion_producto
+class Pedido:
+    def __init__(self, id_usuario, id_tipo_pedido, created_by="admin"):
+        self.id_usuario = id_usuario
+        self.id_tipo_pedido = id_tipo_pedido
+        self.monto_pedido = 0.0
+        self.estado_pedido = "Pendiente"
+        self.created_by = created_by
+        self.detalles_temporales = []
 
-    def guardar(self):
+    def agregar_producto(self, id_producto, cantidad, precio_unitario, descripcion="Sin notas"):
+        subtotal_item = cantidad * precio_unitario
+        detalle = {
+            "id_producto": id_producto,
+            "cantidad": cantidad,
+            "precio_unitario": precio_unitario,
+            "descripcion_pedido": descripcion
+        }
+        self.detalles_temporales.append(detalle)
+        self.monto_pedido += subtotal_item
+        print(f"Producto ID {id_producto} agregado. Subtotal: ${subtotal_item}")
+
+    def guardar_pedido_completo(self):
+        if not self.detalles_temporales:
+            print("No se puede guardar un pedido sin productos.")
+            return False
+        
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = """
-        INSERT INTO productos (nombre_producto, precio_actual, stock, descripcion_producto)
-        VALUES (%s, %s, %s, %s)
-        """
-        
-        valores = (self.nombre_producto, self.precio_actual, self.stock, self.descripcion_producto)
-        cursor.execute(sql, valores)
-        conexion.commit()
-        print("\nProducto agregado correctamente.")
-        cursor.close()
-        conexion.close()
+        try:
+            # Insertar pedido
+            sql_pedido = """
+            INSERT INTO pedidos (id_usuario, id_tipo_pedido, monto_pedido, estado_pedido, created_by)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            valores_pedido = (self.id_usuario, self.id_tipo_pedido, self.monto_pedido, 
+                            self.estado_pedido, self.created_by)
+            cursor.execute(sql_pedido, valores_pedido)
+            id_pedido_generado = cursor.lastrowid
+            
+            # Insertar detalles
+            sql_detalle = """
+            INSERT INTO detalles_pedidos (id_pedido, id_producto, cantidad, descripcion_pedido, precio_unitario, created_by)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """
+            
+            for item in self.detalles_temporales:
+                valores_detalle = (id_pedido_generado, item["id_producto"], item["cantidad"],
+                                  item["descripcion_pedido"], item["precio_unitario"], self.created_by)
+                cursor.execute(sql_detalle, valores_detalle)
+            
+            conexion.commit()
+            print(f"\nPedido #{id_pedido_generado} guardado con éxito. Total: ${self.monto_pedido}")
+            self.detalles_temporales = []
+            return True
+            
+        except Exception as e:
+            conexion.rollback()
+            print(f"Error al registrar el pedido: {e}")
+            return False
+        finally:
+            cursor.close()
+            conexion.close()
 
     @staticmethod
-    def listar():
+    def mostrar_total_en_venta():
         conexion = Conexion.conectar()
         cursor = conexion.cursor()
         
-        sql = """
-        SELECT id_producto, nombre_producto, precio_actual, stock
-        FROM productos
-        WHERE deleted = 0
-        ORDER BY nombre_producto ASC
-        """
-        
+        sql = "SELECT SUM(monto_pedido) FROM pedidos WHERE estado_pedido = 'Pagado' AND deleted = 0"
         cursor.execute(sql)
-        productos = cursor.fetchall()
+        resultado = cursor.fetchone()
         
-        print("\n===== PRODUCTOS =====\n")
-        for producto in productos:
-            print(f"ID: {producto[0]} | Nombre: {producto[1]} | "
-                  f"Precio: ${producto[2]} | Stock: {producto[3]}")
+        total = resultado[0] if resultado[0] is not None else 0.0
+        print("\n=========================================")
+        print(f" TOTAL GENERAL HISTÓRICO EN VENTAS: ${total}")
+        print("=========================================")
         
         cursor.close()
         conexion.close()

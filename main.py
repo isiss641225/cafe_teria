@@ -2,8 +2,8 @@ import os
 from conexion import Conexion
 from Clase1 import TipoUsuario
 from Clase2 import Usuario
-from Clase4 import Producto
-from Clase5 import Pedido
+from Clase3 import Producto
+from Clase4 import Pedido
 
 def limpiar_consola():
     os.system('cls' if os.name == 'nt' else 'clear')
