@@ -87,9 +87,9 @@ class Pedido:
             conexion.commit()
             
             if cursor.rowcount > 0:
-                print(f"\n✅ Pedido #{id_pedido} marcado como PAGADO exitosamente.")
+                print(f"\n Pedido #{id_pedido} marcado como PAGADO exitosamente.")
             else:
-                print(f"\n❌ No se encontró el pedido #{id_pedido} o ya está pagado.")
+                print(f"\n No se encontró el pedido #{id_pedido} o ya está pagado.")
                 
         except Exception as e:
             conexion.rollback()
@@ -153,10 +153,10 @@ class Pedido:
         print("\n" + "="*45)
         print("     RESUMEN DE VENTAS")
         print("="*45)
-        print(f"💰 Total pagado:        ${total_pagado:,.2f}")
-        print(f"⏳ Total pendiente:     ${total_pendiente:,.2f}")
+        print(f"Total pagado:        ${total_pagado:,.2f}")
+        print(f"Total pendiente:     ${total_pendiente:,.2f}")
         print(f"{'-'*45}")
-        print(f"📊 Total general:       ${total_general:,.2f}")
+        print(f"Total general:       ${total_general:,.2f}")
         print("="*45)
         
         cursor.close()

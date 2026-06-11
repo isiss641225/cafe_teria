@@ -46,3 +46,55 @@ class Producto:
         
         cursor.close()
         conexion.close()
+
+    @staticmethod
+    def actualizar():
+        id_producto = input("Ingrese ID del producto: ")
+        nuevo_precio = input("Ingrese nuevo precio: ")
+        nuevo_stock = input("Ingrese nuevo stock: ")
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = """
+        UPDATE productos
+        SET precio_actual = %s,
+            stock = %s
+        WHERE id_producto = %s AND deleted = 0
+        """
+        
+        valores = (nuevo_precio, nuevo_stock, id_producto)
+        cursor.execute(sql, valores)
+        conexion.commit()
+        
+        if cursor.rowcount > 0:
+            print("\nProducto actualizado correctamente.")
+        else:
+            print("\nNo se encontró el producto.")
+        
+        cursor.close()
+        conexion.close()
+
+    @staticmethod
+    def eliminar():
+        id_producto = input("Ingrese ID del producto: ")
+        
+        conexion = Conexion.conectar()
+        cursor = conexion.cursor()
+        
+        sql = """
+        UPDATE productos
+        SET deleted = 1
+        WHERE id_producto = %s AND deleted = 0
+        """
+        
+        cursor.execute(sql, (id_producto,))
+        conexion.commit()
+        
+        if cursor.rowcount > 0:
+            print("\nProducto eliminado correctamente.")
+        else:
+            print("\nNo se encontró el producto.")
+        
+        cursor.close()
+        conexion.close()
