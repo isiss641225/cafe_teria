@@ -1,110 +1,182 @@
-import os # --> ejecuta comandos en consola
-def limpiar_consola(): # limpian consola del terminal
-    os.system('cls')
+import os
+from conexion import Conexion
+from Clase1 import TipoUsuario
+from Clase2 import Usuario
+from Clase3 import Producto
+from Clase4 import Pedido
 
-        # =====================================================================
-#        SISTEMA DE MENÚ INTERACTIVO (BUCLE WHILE)
-# =====================================================================
-
-# Datos base iniciales obligatorios para que el sistema funcione
-# rol_admin = TipoUsuario("Administrador", "Acceso total")
-# usuario_base = Usuario("Sebastian Anabalon", "seba@cafe.com", "seba_admin", "7777", 30, rol_admin)
-# empleado_base = Empleado("Carlos A.", usuario_base)
-# tipo_entrega = TipoPedido("Local")
+def limpiar_consola():
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 while True:
     limpiar_consola()
     print("=========================================")
     print("      SISTEMA DE GESTIÓN DE CAFETERÍA     ")
     print("=========================================")
-    print("1. Ver inventario de productos y precios")
-    print("2. Registrar nuevo usuario")
-    print("3. Ver lista de usuarios")
-    print("4. Crear un nuevo pedido (Venta)")
-    print("5. Ver total histórico de ventas")
-    print("6. Salir")
+    print("1. Ver inventario de productos")
+    print("2. Agregar nuevo producto")
+    print("3. Actualizar producto")
+    print("4. Eliminar producto")
+    print("5. Registrar nuevo usuario")
+    print("6. Ver lista de usuarios")
+    print("7. Crear un nuevo pedido")
+    print("8. Ver pedidos pendientes")
+    print("9. Pagar pedido")
+    print("10. Ver total de ventas")
+    print("11. Salir")
     print("=========================================")
     
-    opcion = input("Selecciona una opción (1-6): ")
-
-    if opcion == "1":
+    opcion = input("Selecciona una opción (1-11): ")
+    
+    # ========== CRUD PRODUCTO ==========
+    
+    if opcion == "1":  # READ
         limpiar_consola()
-        #Producto.mostrar_productos_y_valores()
+        Producto.listar()
         input("\nPresiona Enter para volver al menú...")
-
-    elif opcion == "2":
+    
+    elif opcion == "2":  # CREATE
         limpiar_consola()
-        print("=== REGISTRAR NUEVO USUARIO ===")
-        nombre = input("Nombre completo: ")
+        print("=== AGREGAR NUEVO PRODUCTO ===\n")
+        nombre = input("Nombre del producto: ")
+        precio = float(input("Precio: $"))
+        stock = int(input("Stock: "))
+        descripcion = input("Descripción: ")
+        
+        producto = Producto(nombre, precio, stock, descripcion)
+        producto.guardar()
+        input("\nPresiona Enter para volver al menú...")
+    
+    elif opcion == "3":  # UPDATE
+        limpiar_consola()
+        Producto.listar()
+        print("\n=== ACTUALIZAR PRODUCTO ===\n")
+        Producto.actualizar()
+        input("\nPresiona Enter para volver al menú...")
+    
+    elif opcion == "4":  # DELETE
+        limpiar_consola()
+        Producto.listar()
+        print("\n=== ELIMINAR PRODUCTO ===\n")
+        Producto.eliminar()
+        input("\nPresiona Enter para volver al menú...")
+    
+    # ========== USUARIOS ==========
+    
+    elif opcion == "5":
+        limpiar_consola()
+        print("=== REGISTRAR NUEVO USUARIO ===\n")
+        
+        TipoUsuario.listar()
+        
+        nombre = input("\nNombre: ")
+        apellido = input("Apellido: ")
         correo = input("Correo electrónico: ")
-        username = input("Nombre de usuario (username): ")
+        username = input("Nombre de usuario: ")
         password = input("Contraseña: ")
         edad = int(input("Edad: "))
+        id_tipo = int(input("ID del tipo de usuario: "))
         
-        # Le asignamos el rol básico de administrador creado arriba para simplificar
-        #Usuario(nombre, correo, username, password, edad, rol_admin)
-        print("\nUsuario registrado con éxito!")
+        usuario = Usuario(nombre, apellido, correo, username, password, edad, id_tipo)
+        usuario.guardar()
         input("\nPresiona Enter para volver al menú...")
-
-    elif opcion == "3":
+    
+    elif opcion == "6":
         limpiar_consola()
-        #Usuario.mostrar_usuarios()
+        Usuario.listar()
         input("\nPresiona Enter para volver al menú...")
-
-    elif opcion == "4":
+    
+    # ========== PEDIDOS ==========
+    
+    elif opcion == "7":
         limpiar_consola()
-        print("=== CREANDO NUEVO PEDIDO ===")
-        # Inicializamos un pedido vacío
-        #pedido_actual = Pedido(empleado_base, tipo_entrega)
+        print("=== CREAR NUEVO PEDIDO ===\n")
+        
+        Usuario.listar()
+        id_usuario = int(input("\nID del usuario: "))
+        id_tipo_pedido = int(input("ID del tipo de pedido (1: Local, 2: Delivery): "))
+        
+        pedido_actual = Pedido(id_usuario, id_tipo_pedido)
         
         while True:
-            #Producto.mostrar_productos_y_valores()
+            limpiar_consola()
+            print("=== AGREGAR PRODUCTOS ===\n")
+            Producto.listar()
+            
             try:
-                id_prod = int(input("\nIngresa el ID del producto que deseas llevar (0 para terminar el pedido): "))
+                id_prod = int(input("\nID del producto (0 para terminar): "))
                 if id_prod == 0:
                     break
                 
-                #if id_prod in Producto.inventario_preestablecido:
-                    cant = int(input(f"¿Cuántas unidades deseas?: "))
-                    if cant <= 0:
-                        print("La cantidad debe ser mayor a 0.")
-                        continue
+                conexion = Conexion.conectar()
+                cursor = conexion.cursor()
+                cursor.execute("SELECT precio_actual, stock FROM productos WHERE id_producto = %s AND deleted = 0", (id_prod,))
+                producto = cursor.fetchone()
+                cursor.close()
+                conexion.close()
+                
+                if producto:
+                    precio = float(producto[0])
+                    stock = int(producto[1])
                     
-                    # Instanciamos el producto con su id
-                    producto_elegido = Producto(id_prod)
-                    pedido_actual.agregar_producto(producto_elegido, cant)
+                    cantidad = int(input(f"Cantidad (stock: {stock}): "))
+                    if cantidad <= 0:
+                        print("Cantidad debe ser mayor a 0.")
+                    elif cantidad > stock:
+                        print(f"Stock insuficiente. Solo hay {stock}.")
+                    else:
+                        pedido_actual.agregar_producto(id_prod, cantidad, precio)
                 else:
-                    print("ID de producto no válido.")
+                    print("Producto no válido.")
+                    
             except ValueError:
-                print("Por favor, introduce un número válido.")
+                print("Ingrese un número válido.")
             
-            input("\nPresiona Enter para continuar cargando productos...")
-            limpiar_consola()
-
-        # Al terminar de agregar productos, procedemos al pago si compró algo
-        #if pedido_actual.monto_pedido > 0:
-            #print(f"\nEl total del pedido es: ${pedido_actual.monto_pedido}")
-            pagar = input("¿Deseas confirmar el pago de este pedido? (si/no): ").lower()
-            if pagar == 'si':
-                #pedido_actual.pagar_pedido()
-                print("Pedido pagado con éxito y registrado en el historial!")
+            input("\nPresiona Enter para continuar...")
+        
+        if pedido_actual.detalles_temporales:
+            print(f"\nTotal: ${pedido_actual.monto_pedido}")
+            confirmar = input("¿Confirmar pedido? (si/no): ").lower()
+            if confirmar == 'si':
+                pedido_actual.guardar_pedido_completo()
             else:
-                print("Pedido cancelado (se devolvió el stock de este menú simulado)")
+                print("Pedido cancelado.")
         else:
-            print("\nNo se agregaron productos al pedido.")
-            
+            print("No se agregaron productos.")
+        
         input("\nPresiona Enter para volver al menú...")
-
-    elif opcion == "5":
+    
+    elif opcion == "8":
         limpiar_consola()
-       #Pedido.mostrar_total_en_venta()
+        Pedido.listar_pedidos_pendientes()
         input("\nPresiona Enter para volver al menú...")
-
-    elif opcion == "6":
+    
+    elif opcion == "9":
+        limpiar_consola()
+        Pedido.listar_pedidos_pendientes()
+        try:
+            id_pedido = int(input("\nID del pedido a pagar: "))
+            Pedido.pagar_pedido(id_pedido)
+        except ValueError:
+            print("Ingrese un número válido.")
+        input("\nPresiona Enter para volver al menú...")
+    
+    elif opcion == "10":
+        limpiar_consola()
+        Pedido.mostrar_total_en_venta()
+        input("\nPresiona Enter para volver al menú...")
+    
+    elif opcion == "11":
         limpiar_consola()
         print("Saliendo del sistema...")
         break
     
     else:
+<<<<<<< HEAD
         print("Opción inválida. Intenta de nuevo.")
         input("\nPresiona Enter para continuar...")
+
+=======
+        print("Opción inválida.")
+        input("\nPresiona Enter para continuar...")
+>>>>>>> d1f3812d5108f4a3492c3cbcc665068583c84eb2
